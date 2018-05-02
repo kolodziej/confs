@@ -5,7 +5,7 @@ from confs import Core, Repository, Configuration, Ident, Endpoint
 
 @click.group()
 @click.option('--config', default='~/.confsrc', help='Confs configuration file')
-@click.option('--id', default=None, help='id')
+@click.option('--id', default=None, help='system identifier')
 @click.pass_context
 def main(ctx, config, id):
     ctx.obj = {
