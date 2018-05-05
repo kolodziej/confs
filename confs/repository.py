@@ -3,24 +3,56 @@ import subprocess
 
 class Repository(object):
     """ Repository with configuration files """
+    CONFSID_NAME = '.confsid'
 
     def __init__(self, path, ident):
         if path is None:
             raise Exception("Repository path cannot be null!")
 
-        self.path = os.path.expanduser(path)
+        self.path = path
         self.ident = ident
 
-    def create_repository(self):
-        path = os.path.join(
-            self.path,
-            self.ident.get()
-        )
+    def check_if_repo_exists(self):
+        path = os.path.join(self.path, Repository.CONFSID_NAME)
+        return os.path.exists(path)
+
+    def create(self):
+        hosts = ['_common']
+        if self.ident is not None:
+            hosts.append(self.ident)
+
         result = subprocess.call([
-            'mkdir', '-p', path
+            'mkdir', '-p', os.path.join(self.path, '_endpoint')
         ])
 
-        return result == 0
+        if result != 0:
+            raise Exception("Could not create endpoint for repository")
+
+        for host in hosts:
+            self.add_host(host)
+
+        confsid_path = os.path.join(self.path, Repository.CONFSID_NAME)
+        with open(confsid_path, 'w') as f:
+            f.write(self.ident)
+
+    def add_host(self, ident):
+        result = subprocess.call([
+            'mkdir', '-p', ident
+        ])
+
+        if result != 0:
+            raise Exception("Could not create directory for host {}".format(ident))
+
+        files = [
+            os.path.join(self.path, '{}.json'.format(ident)),
+            os.path.join(self.path, '{}.priv.json'.format(ident))
+        ]
+        result = subprocess.call([
+            'touch', *files
+        ])
+
+        if result != 0:
+            raise Exception("Could not create contexts for host {}".format(ident))
 
     def set_ident(self, ident):
         self.ident = ident
